@@ -1,8 +1,10 @@
-# Welcome to your CDK TypeScript project
+# App Runner Cdk Example
 
-This is a blank project for CDK development with TypeScript.
+A cdk typescript example deploy AWS App Runner with cdk. 
 
-The `cdk.json` file tells the CDK Toolkit how to execute your app.
+1. Make sure you create an ECR repo first and adjust the name accordingly in the stack. 
+2. Adjust your account details in *bin/apprunner-cdk-example.ts*
+
 
 ## Useful commands
 
