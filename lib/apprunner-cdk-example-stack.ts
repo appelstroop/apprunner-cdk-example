@@ -23,6 +23,7 @@ import {
   DatabaseCluster,
   DatabaseClusterEngine,
 } from "aws-cdk-lib/aws-rds";
+import { Secret } from "aws-cdk-lib/aws-secretsmanager";
 import { Construct } from "constructs";
 import { AppRunnerAutoScaling } from "./constructs/apprunner-autoscaling";
 
@@ -72,6 +73,10 @@ export class ApprunnerCdkExampleStack extends cdk.Stack {
 
     // set security group on DB cluster
     dbCluster.connections.allowFrom(dbCluster, Port.tcp(5432));
+
+    // use DB secret credentials or create new one. You can use this secret in the rest of your cdk code if you want
+    const dbSecrets =
+      dbCluster.secret ?? new Secret(this, "ApprunnerCdkExampleDBSecrets");
 
     const accessRole = new Role(this, "ApprunnerCdkExampleAccessRole", {
       assumedBy: new ServicePrincipal("build.apprunner.amazonaws.com"),
@@ -126,12 +131,16 @@ export class ApprunnerCdkExampleStack extends cdk.Stack {
     }));
 
     // Create autoscaling from custom construct
-    const appRunnerAutoScaling = new AppRunnerAutoScaling(this, 'ApprunnerAutoscaling', {
-      AutoScalingConfigurationName: 'apprunner-autoscaling',
-      MinSize: 1,
-      MaxSize: 3,
-      MaxConcurrency: 100 // defines after how many concurrent requests app runner should scale up
-    })
+    const appRunnerAutoScaling = new AppRunnerAutoScaling(
+      this,
+      "ApprunnerAutoscaling",
+      {
+        AutoScalingConfigurationName: "apprunner-autoscaling",
+        MinSize: 1,
+        MaxSize: 3,
+        MaxConcurrency: 100, // defines after how many concurrent requests app runner should scale up
+      }
+    );
 
     const app = new CfnService(this, "ApprunnerCdkExampleService", {
       sourceConfiguration: {
@@ -153,7 +162,8 @@ export class ApprunnerCdkExampleStack extends cdk.Stack {
         interval: 5,
       },
       // optional autoscalingconfiguration
-      autoScalingConfigurationArn: appRunnerAutoScaling.autoScalingConfigurationArn,
+      autoScalingConfigurationArn:
+        appRunnerAutoScaling.autoScalingConfigurationArn,
       instanceConfiguration: {
         instanceRoleArn: instanceRole.roleArn,
       },
